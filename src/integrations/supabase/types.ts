@@ -7,23 +7,374 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      building_footprints: {
+        Row: {
+          amenity: string | null
+          area_sq_m: string | null
+          bbox: number[] | null
+          building_i: string | null
+          building_n: string | null
+          condition: string | null
+          created_at: string | null
+          fid: number | null
+          floors: number | null
+          geometry: Json | null
+          id: number
+          land_use: string | null
+          last_updat: string | null
+          lots: string | null
+          parcel_id: string | null
+          ptype: string | null
+          section: string | null
+          source: string | null
+          uprn_2: string | null
+          val: number | null
+          year_built: number | null
+          zone_id: number | null
+        }
+        Insert: {
+          amenity?: string | null
+          area_sq_m?: string | null
+          bbox?: number[] | null
+          building_i?: string | null
+          building_n?: string | null
+          condition?: string | null
+          created_at?: string | null
+          fid?: number | null
+          floors?: number | null
+          geometry?: Json | null
+          id?: never
+          land_use?: string | null
+          last_updat?: string | null
+          lots?: string | null
+          parcel_id?: string | null
+          ptype?: string | null
+          section?: string | null
+          source?: string | null
+          uprn_2?: string | null
+          val?: number | null
+          year_built?: number | null
+          zone_id?: number | null
+        }
+        Update: {
+          amenity?: string | null
+          area_sq_m?: string | null
+          bbox?: number[] | null
+          building_i?: string | null
+          building_n?: string | null
+          condition?: string | null
+          created_at?: string | null
+          fid?: number | null
+          floors?: number | null
+          geometry?: Json | null
+          id?: never
+          land_use?: string | null
+          last_updat?: string | null
+          lots?: string | null
+          parcel_id?: string | null
+          ptype?: string | null
+          section?: string | null
+          source?: string | null
+          uprn_2?: string | null
+          val?: number | null
+          year_built?: number | null
+          zone_id?: number | null
+        }
+        Relationships: []
+      }
+      customer_lots: {
+        Row: {
+          address: string | null
+          contact_info: string | null
+          customer_id: string
+          customer_name: string | null
+          date_created: string | null
+          id: number
+          last_updated: string | null
+          lot_number: string | null
+          owner_id: string | null
+          section: string | null
+          ward: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_info?: string | null
+          customer_id: string
+          customer_name?: string | null
+          date_created?: string | null
+          id?: number
+          last_updated?: string | null
+          lot_number?: string | null
+          owner_id?: string | null
+          section?: string | null
+          ward?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_info?: string | null
+          customer_id?: string
+          customer_name?: string | null
+          date_created?: string | null
+          id?: number
+          last_updated?: string | null
+          lot_number?: string | null
+          owner_id?: string | null
+          section?: string | null
+          ward?: string | null
+        }
+        Relationships: []
+      }
+      Lae_Cadatre_w2: {
+        Row: {
+          area_sq_m: string | null
+          fid: number
+          land_use: string | null
+          "lot(s)": string | null
+          owner_id: string | null
+          parcel_id: string
+          ptype: string | null
+          rplan: string | null
+          section: string | null
+          uprn_2: string | null
+          "val no.": number | null
+          ward_no: string | null
+          zone_id: number | null
+        }
+        Insert: {
+          area_sq_m?: string | null
+          fid?: number
+          land_use?: string | null
+          "lot(s)"?: string | null
+          owner_id?: string | null
+          parcel_id: string
+          ptype?: string | null
+          rplan?: string | null
+          section?: string | null
+          uprn_2?: string | null
+          "val no."?: number | null
+          ward_no?: string | null
+          zone_id?: number | null
+        }
+        Update: {
+          area_sq_m?: string | null
+          fid?: number
+          land_use?: string | null
+          "lot(s)"?: string | null
+          owner_id?: string | null
+          parcel_id?: string
+          ptype?: string | null
+          rplan?: string | null
+          section?: string | null
+          uprn_2?: string | null
+          "val no."?: number | null
+          ward_no?: string | null
+          zone_id?: number | null
+        }
+        Relationships: []
+      }
+      planning_data: {
+        Row: {
+          last_updated_at: string | null
+          last_updated_by: string | null
+          permit_status: string | null
+          planning_id: number
+          property_id: number
+          zoning_code: string | null
+        }
+        Insert: {
+          last_updated_at?: string | null
+          last_updated_by?: string | null
+          permit_status?: string | null
+          planning_id?: number
+          property_id: number
+          zoning_code?: string | null
+        }
+        Update: {
+          last_updated_at?: string | null
+          last_updated_by?: string | null
+          permit_status?: string | null
+          planning_id?: number
+          property_id?: number
+          zoning_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_data_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["property_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          building_details: string | null
+          geom: unknown | null
+          land_details: string | null
+          last_valuation_year: number | null
+          owner_user_id: string | null
+          property_id: number
+        }
+        Insert: {
+          address: string
+          building_details?: string | null
+          geom?: unknown | null
+          land_details?: string | null
+          last_valuation_year?: number | null
+          owner_user_id?: string | null
+          property_id?: number
+        }
+        Update: {
+          address?: string
+          building_details?: string | null
+          geom?: unknown | null
+          land_details?: string | null
+          last_valuation_year?: number | null
+          owner_user_id?: string | null
+          property_id?: number
+        }
+        Relationships: []
+      }
+      tax_records: {
+        Row: {
+          amount_due: number | null
+          customer_name: string | null
+          payment_status: string | null
+          property_id: number
+          record_date: string | null
+          tax_record_id: number
+          tax_year: number
+        }
+        Insert: {
+          amount_due?: number | null
+          customer_name?: string | null
+          payment_status?: string | null
+          property_id: number
+          record_date?: string | null
+          tax_record_id?: number
+          tax_year: number
+        }
+        Update: {
+          amount_due?: number | null
+          customer_name?: string | null
+          payment_status?: string | null
+          property_id?: number
+          record_date?: string | null
+          tax_record_id?: number
+          tax_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["property_id"]
+          },
+        ]
+      }
+      user: {
+        Row: {
+          id: number
+          password: string
+          username: string
+        }
+        Insert: {
+          id?: number
+          password: string
+          username: string
+        }
+        Update: {
+          id?: number
+          password?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      owners: {
+        Row: {
+          owner_id: string
+          owner_name: string
+          parcel_id: string
+          contact_info: string | null
+          title_reference: string | null
+          term_of_lease: string | null
+          date_of_grant: string | null
+        }
+        Insert: {
+          owner_id: string
+          owner_name: string
+          parcel_id: string
+          contact_info?: string | null
+          title_reference?: string | null
+          term_of_lease?: string | null
+          date_of_grant?: string | null
+        }
+        Update: {
+          owner_id?: string
+          owner_name?: string
+          parcel_id?: string
+          contact_info?: string | null
+          title_reference?: string | null
+          term_of_lease?: string | null
+          date_of_grant?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_all_properties_geojson: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role:
+        | "finance_editor"
+        | "planning_editor"
+        | "asset_editor"
+        | "client_user"
+        | "public_viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +501,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: [
+        "finance_editor",
+        "planning_editor",
+        "asset_editor",
+        "client_user",
+        "public_viewer",
+      ],
+    },
   },
 } as const

@@ -1,25 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { Routes, Route } from 'react-router-dom';
-import MapView from './MapView';
-import DataDashboard from '@/components/dashboard/DataDashboard';
+import mapboxgl from 'mapbox-gl';
+import { Outlet, NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, Map, BarChart3, Database, Brain } from 'lucide-react';
+import UserDropdown from '@/components/layout/UserDropdown';
+import morobeFlag from "@/assets/morobe-flag.jpg";
+
+const mainNavItems = [
+  { title: "Map View", url: "/", icon: Map },
+  { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
+  { title: "Data Sources", url: "/data", icon: Database },
+  { title: "Data Analysis", url: "/data-analysis", icon: Brain },
+];
 
 const Index = () => {
+  const [map, setMap] = useState<mapboxgl.Map | null>(null);
+
+  const getNavCls = ({ isActive }: { isActive: boolean }) =>
+    isActive 
+      ? "bg-gis-accent/20 text-gis-accent border-b-2 border-gis-accent font-medium" 
+      : "hover:bg-gis-panel-header/50 hover:text-gis-accent";
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <header className="h-14 flex items-center justify-between border-b border-border bg-gis-panel px-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              <div className="h-6 w-px bg-border" />
-              <h2 className="font-semibold text-foreground">Lae Urban Municipal Management System</h2>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={morobeFlag} 
+                    alt="Morobe Provincial Flag" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg text-foreground ">LAE URBAN</h1>
+                  <p className="text-xs text-muted-foreground">Municipal Management</p>
+                </div>
+              </div>
+              <nav className="hidden md:flex items-center space-x-4 ml-6">
+                {mainNavItems.map((item) => (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    end
+                    className={({ isActive }) => `flex items-center px-3 py-2 rounded-md text-sm font-medium ${getNavCls({ isActive })}`}
+                  >
+                    <item.icon className="h-4 w-4 mr-2" />
+                    {item.title}
+                  </NavLink>
+                ))}
+              </nav>
             </div>
             
             <div className="flex items-center gap-2">
@@ -27,19 +64,13 @@ const Index = () => {
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Button>
+              <UserDropdown />
             </div>
           </header>
 
           {/* Main Content */}
           <main className="flex-1 overflow-hidden">
-            <Routes>
-              <Route path="/" element={<MapView />} />
-              <Route path="/dashboard" element={<DataDashboard />} />
-              <Route path="/data" element={<div className="p-6"><h1 className="text-2xl font-bold">Data Sources</h1><p className="text-muted-foreground">Manage your data connections and sources.</p></div>} />
-              <Route path="/tools/draw" element={<div className="p-6"><h1 className="text-2xl font-bold">Drawing Tools</h1><p className="text-muted-foreground">Advanced drawing and editing tools.</p></div>} />
-              <Route path="/tools/measure" element={<div className="p-6"><h1 className="text-2xl font-bold">Measurement Tools</h1><p className="text-muted-foreground">Measure distances, areas, and coordinates.</p></div>} />
-              <Route path="/tools/navigation" element={<div className="p-6"><h1 className="text-2xl font-bold">Navigation Tools</h1><p className="text-muted-foreground">GPS navigation and routing tools.</p></div>} />
-            </Routes>
+            <Outlet context={{ map, setMap }} />
           </main>
         </div>
       </div>

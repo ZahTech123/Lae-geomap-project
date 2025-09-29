@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -7,20 +7,61 @@ import {
   Database,
   Layers,
   MapPin,
-  TrendingUp,
-  Users,
   Globe,
   Clock,
   BarChart3,
   PieChart,
   LineChart
 } from 'lucide-react';
+import {
+  fetchPropertiesCount,
+  fetchTaxRecordsCount,
+  fetchCustomerLotsCount,
+  fetchBuildingFootprintsCount
+} from '@/integrations/supabase/services';
 
 const DataDashboard: React.FC = () => {
-  // Sample data for charts
+  const [propertiesCount, setPropertiesCount] = useState<number | null>(null);
+  const [taxRecordsCount, setTaxRecordsCount] = useState<number | null>(null);
+  const [customerLotsCount, setCustomerLotsCount] = useState<number | null>(null);
+  const [buildingFootprintsCount, setBuildingFootprintsCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const [
+        propCount,
+        taxCount,
+        customerCount,
+        buildingCount
+      ] = await Promise.all([
+        fetchPropertiesCount(),
+        fetchTaxRecordsCount(),
+        fetchCustomerLotsCount(),
+        fetchBuildingFootprintsCount()
+      ]);
+
+      setPropertiesCount(propCount);
+      setTaxRecordsCount(taxCount);
+      setCustomerLotsCount(customerCount);
+      setBuildingFootprintsCount(buildingCount);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const totalLayers = (propertiesCount || 0) + (taxRecordsCount || 0) + (customerLotsCount || 0) + (buildingFootprintsCount || 0);
+  const totalFeatures = (propertiesCount || 0) + (buildingFootprintsCount || 0); // Assuming properties and building footprints are primary geographic features
+
+  // Sample data for charts (will be updated with real data where possible)
   const layerData = [
-    { name: 'Roads', features: 12453, status: 'active' },
-    { name: 'Buildings', features: 8902, status: 'active' },
+    { name: 'Properties', features: propertiesCount || 0, status: 'active' },
+    { name: 'Tax Records', features: taxRecordsCount || 0, status: 'active' },
+    { name: 'Customer Lots', features: customerLotsCount || 0, status: 'active' },
+    { name: 'Building Footprints', features: buildingFootprintsCount || 0, status: 'active' },
+    // POI, Boundaries, Water are placeholders for now, or could be derived from other data sources
     { name: 'POI', features: 5634, status: 'inactive' },
     { name: 'Boundaries', features: 3421, status: 'active' },
     { name: 'Water', features: 2876, status: 'active' },
@@ -55,32 +96,32 @@ const DataDashboard: React.FC = () => {
   const stats = [
     {
       title: 'Total Layers',
-      value: '24',
-      change: '+3',
+      value: totalLayers.toLocaleString(),
+      change: '+3', // Placeholder
       changeType: 'positive' as const,
       icon: Layers,
       description: 'Active data layers'
     },
     {
       title: 'Features',
-      value: '33.2K',
-      change: '+12%',
+      value: totalFeatures.toLocaleString(),
+      change: '+12%', // Placeholder
       changeType: 'positive' as const,
       icon: MapPin,
       description: 'Geographic features'
     },
     {
       title: 'Daily Views',
-      value: '1,247',
-      change: '+8%',
+      value: '1,247', // Placeholder
+      change: '+8%', // Placeholder
       changeType: 'positive' as const,
       icon: Activity,
       description: 'Map views today'
     },
     {
       title: 'Data Size',
-      value: '2.4 GB',
-      change: '+150MB',
+      value: '2.4 GB', // Placeholder
+      change: '+150MB', // Placeholder
       changeType: 'neutral' as const,
       icon: Database,
       description: 'Total storage used'
