@@ -116,7 +116,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ onMapReady, onFeatureClick,
     if (source) {
       source.setData(parsedGeojsonData);
     }
-  }, [propertiesGeoJSON]);
+  }, [propertiesGeoJSON, mapInstance]);
 
   return (
     <div className="relative flex-1">
