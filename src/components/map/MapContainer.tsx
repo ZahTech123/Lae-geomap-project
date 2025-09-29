@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import bbox from '@turf/bbox';
 import ToolbarControl from '../toolbar/CollapsibleToolbar';
 import * as GeoJSON from 'geojson';
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton component
+import { Loader2 } from 'lucide-react'; // Import Loader2 for spinner
 
 interface MapContainerProps {
   onMapReady?: (map: mapboxgl.Map) => void;
@@ -19,6 +21,8 @@ const MapContainer: React.FC<MapContainerProps> = ({ onMapReady, onFeatureClick,
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  const [isMapLoading, setIsMapLoading] = useState(true); // Loading state for map initialization
+  const [isPropertiesUpdating, setIsPropertiesUpdating] = useState(false); // Loading state for properties update
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return; // initialize map only once
@@ -73,12 +77,14 @@ const MapContainer: React.FC<MapContainerProps> = ({ onMapReady, onFeatureClick,
        
         setMapInstance(map.current);
         onMapReady?.(map.current);
+        setIsMapLoading(false); // Map is ready
         toast.success('Map initialized successfully!');
       });
 
     } catch (error) {
       console.error('Error initializing map:', error);
       toast.error('Failed to initialize map. Please check your Mapbox token.');
+      setIsMapLoading(false); // Ensure loading state is reset even on error
     }
 
     return () => {
@@ -88,6 +94,8 @@ const MapContainer: React.FC<MapContainerProps> = ({ onMapReady, onFeatureClick,
 
   useEffect(() => {
     if (!map.current || !propertiesGeoJSON) return;
+
+    setIsPropertiesUpdating(true); // Set loading to true before updating properties
 
     // Parse JSON strings in feature properties for easier filtering
     const parsedGeojsonData = {
@@ -116,11 +124,26 @@ const MapContainer: React.FC<MapContainerProps> = ({ onMapReady, onFeatureClick,
     if (source) {
       source.setData(parsedGeojsonData);
     }
+    setIsPropertiesUpdating(false); // Set loading to false after updating properties
   }, [propertiesGeoJSON, mapInstance]);
+
+  if (isMapLoading) {
+    return (
+      <div className="relative flex-1 flex items-center justify-center">
+        <Skeleton className="absolute inset-0" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary z-10" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex-1">
       <div ref={mapContainer} className="absolute inset-0" />
+      {isPropertiesUpdating && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-25 z-10">
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        </div>
+      )}
       <div className="absolute bottom-0 w-full bg-gray-900 bg-opacity-75 text-white text-center p-1 text-xs">
        © 2025 Municipality of Lae City | Data:MassGIS,Valuation Roll |
         Map Tiles © Mapbox | © OpenStreetMap | © Maxar Contributors

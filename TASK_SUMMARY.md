@@ -39,3 +39,19 @@ The persistent "relation does not exist" error, even after explicit schema confi
     *   **Schema Visibility**: Confirm that the `public` schema is correctly exposed and accessible.
 
 Once these checks are performed and any necessary adjustments are made, please let me know, and I will re-attempt the query.
+
+## Task: Integrate Loading States for Improved User Experience
+
+This task involved integrating loading states into the map page to enhance the user experience during data fetching and map rendering.
+
+The following modifications were successfully completed:
+
+1.  **`src/pages/MapView.tsx`**:
+    *   Introduced an `isGeoJsonLoading` state to manage the loading status of the initial GeoJSON data.
+    *   Implemented a full-page `Skeleton` loader that is displayed while `fetchPropertiesGeoJSON` is in progress.
+2.  **`src/components/map/MapContainer.tsx`**:
+    *   Introduced `isMapLoading` state for the initial Mapbox map initialization. A `Skeleton` loader with a `Loader2` spinner is shown until the map is ready.
+    *   Introduced `isPropertiesUpdating` state to indicate when new `propertiesGeoJSON` data is being rendered on the map. A semi-transparent overlay with a `Loader2` spinner is displayed during this update.
+3.  **`src/components/panels/PropertyDetailsPanel.tsx`**:
+    *   Enhanced the existing `loading` state.
+    *   Replaced the simple "Loading..." text with `Skeleton` components for the `Property Information`, `Ownership Information`, `Tax Records`, and `Planning & Zoning` sections, providing a more visually appealing loading experience.

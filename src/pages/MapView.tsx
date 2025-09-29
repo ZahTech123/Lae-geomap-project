@@ -3,9 +3,11 @@ import MapContainer from '@/components/map/MapContainer';
 import GISToolbar from '@/components/toolbar/GISToolbar';
 import PropertyDetailsPanel from '@/components/panels/PropertyDetailsPanel';
 import FilterPanel from '@/components/panels/FilterPanel'; // Import FilterPanel
+import LayerPanel from '@/components/panels/LayerPanel'; // Import LayerPanel
 import mapboxgl from 'mapbox-gl';
 import { useOutletContext } from 'react-router-dom';
 import { fetchPropertiesGeoJSON } from '@/integrations/supabase/services'; // Import fetchPropertiesGeoJSON
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton component
 type Tool =
   | 'select'
   | 'pan' 
@@ -38,6 +40,7 @@ const MapView: React.FC<MapViewProps> = () => {
   const [uniqueLandUseValues, setUniqueLandUseValues] = useState<string[]>([]); // State for unique Land Use values
   const [allPropertiesGeoJSON, setAllPropertiesGeoJSON] = useState<GeoJSON.FeatureCollection | null>(null); // All properties
   const [propertiesGeoJSON, setPropertiesGeoJSON] = useState<GeoJSON.FeatureCollection | null>(null); // Filtered properties
+  const [isGeoJsonLoading, setIsGeoJsonLoading] = useState(true); // Loading state for initial GeoJSON data
 
   const handleMapReady = useCallback((mapInstance: mapboxgl.Map) => {
     setMap(mapInstance);
@@ -104,6 +107,7 @@ const MapView: React.FC<MapViewProps> = () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
+      setIsGeoJsonLoading(true); // Set loading to true before fetching
       const geojsonData = await fetchPropertiesGeoJSON();
       if (geojsonData) {
         setAllPropertiesGeoJSON(geojsonData);
@@ -129,6 +133,7 @@ const MapView: React.FC<MapViewProps> = () => {
         setUniqueZoneIds(Array.from(zones).sort());
         setUniqueLandUseValues(Array.from(landUses).sort());
       }
+      setIsGeoJsonLoading(false); // Set loading to false after fetching
     };
 
     loadInitialData();
@@ -189,26 +194,39 @@ const MapView: React.FC<MapViewProps> = () => {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Map */}
-        <MapContainer
-          onMapReady={handleMapReady}
-          onFeatureClick={handleFeatureClick}
-          activeFilters={activeFilters}
-          propertiesGeoJSON={propertiesGeoJSON} // Pass the filtered GeoJSON data
-        />
-        {/* Sidebar */}
-        <div className="w-96 bg-white border-l border-gray-200 overflow-y-auto">
-          {showFilterPanel ? (
-            <FilterPanel 
-              onApplyFilters={handleApplyFilters} 
-              uniqueZoneIds={uniqueZoneIds}
-              uniqueLandUseValues={uniqueLandUseValues} 
-            />
-          ) : (
-            <PropertyDetailsPanel
-              propertyId={selectedPropertyId}
-              propertyDetails={selectedPropertyDetails}
-            />
-          )}
+        {isGeoJsonLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Skeleton className="h-full w-full" />
+          </div>
+        ) : (
+          <MapContainer
+            onMapReady={handleMapReady}
+            onFeatureClick={handleFeatureClick}
+            activeFilters={activeFilters}
+            propertiesGeoJSON={propertiesGeoJSON} // Pass the filtered GeoJSON data
+          />
+        )}
+        {/* Left Sidebars Container */}
+        <div className="flex">
+          {/* Layer Panel */}
+          <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+            <LayerPanel />
+          </div>
+          {/* Property Details / Filter Panel */}
+          <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
+            {showFilterPanel ? (
+              <FilterPanel 
+                onApplyFilters={handleApplyFilters} 
+                uniqueZoneIds={uniqueZoneIds}
+                uniqueLandUseValues={uniqueLandUseValues} 
+              />
+            ) : (
+              <PropertyDetailsPanel
+                propertyId={selectedPropertyId}
+                propertyDetails={selectedPropertyDetails}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

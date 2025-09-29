@@ -3,6 +3,7 @@ import { fetchTaxRecordsByPropertyId, fetchPlanningDataByPropertyId, TaxRecord, 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton'; // Import Skeleton component
 
 interface PropertyDetailsPanelProps {
   propertyId: number | null;
@@ -44,7 +45,62 @@ const PropertyDetailsPanel: React.FC<PropertyDetailsPanelProps> = ({ propertyId,
   const { prop_details, owner_details } = propertyDetails;
 
   if (loading) {
-    return <div className="p-4 text-center">Loading...</div>;
+    return (
+      <div className="p-4 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Property Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Ownership Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tax Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Planning & Zoning</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
