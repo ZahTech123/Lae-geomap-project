@@ -87,7 +87,13 @@ const MapContainer: React.FC<MapContainerProps> = ({
   useEffect(() => {
     if (map.current || !mapContainer.current) return; // initialize map only once
 
-    const mapboxToken = 'pk.eyJ1Ijoiam9obnNraXBvbGkiLCJhIjoiY201c3BzcDYxMG9neDJscTZqeXQ4MGk4YSJ9.afrO8Lq1P6mIUbSyQ6VCsQ';
+    const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    
+    if (!mapboxToken) {
+      toast.error('Mapbox token is missing. Please check your .env file.');
+      return;
+    }
+    
     mapboxgl.accessToken = mapboxToken;
     // @ts-ignore
     mapboxgl.workerClass = MapboxWorker;
