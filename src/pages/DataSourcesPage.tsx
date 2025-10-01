@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -91,6 +92,7 @@ const formatBuildingDetails = (buildingDetails: any): string => {
 };
 
 const DataSourcesPage = () => {
+  const { user } = useAuth();
   const [taxRecords, setTaxRecords] = useState<TaxRecord[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -105,6 +107,11 @@ const DataSourcesPage = () => {
   const [editFormData, setEditFormData] = useState<any>({});
 
   const { toast } = useToast();
+
+  // Helper function to check if user is restricted
+  const isRestrictedUser = () => {
+    return user?.email === 'zahlytics@gmail.com' || user?.email === 'testuser@gmail.com';
+  };
 
   useEffect(() => {
     const getData = async () => {
@@ -540,12 +547,14 @@ const DataSourcesPage = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <PermissionGate table={tableName} action="write">
-            <DropdownMenuItem onClick={() => handleEdit(record)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-          </PermissionGate>
+          {!isRestrictedUser() && (
+            <PermissionGate table={tableName} action="write">
+              <DropdownMenuItem onClick={() => handleEdit(record)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+            </PermissionGate>
+          )}
           <PermissionGate table={tableName} action="delete">
             <DropdownMenuItem onClick={() => handleDelete(record)} className="text-red-600">
               <Trash2 className="mr-2 h-4 w-4" />
@@ -591,10 +600,10 @@ const DataSourcesPage = () => {
                     <TableHead>Property ID</TableHead>
                     <TableHead>Val No</TableHead>
                     <TableHead>Tax Year</TableHead>
-                    <TableHead>Amount Due</TableHead>
-                    <TableHead>Payment Status</TableHead>
+                    {!isRestrictedUser() && <TableHead>Amount Due</TableHead>}
+                    {!isRestrictedUser() && <TableHead>Payment Status</TableHead>}
                     <TableHead>Record Date</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
+                    {!isRestrictedUser() && <TableHead className="w-[50px]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -604,12 +613,14 @@ const DataSourcesPage = () => {
                       <TableCell>{item.property_id}</TableCell>
                       <TableCell>{item.val_no}</TableCell>
                       <TableCell>{item.tax_year}</TableCell>
-                      <TableCell>{item.amount_due}</TableCell>
-                      <TableCell>{item.payment_status}</TableCell>
+                      {!isRestrictedUser() && <TableCell>{item.amount_due}</TableCell>}
+                      {!isRestrictedUser() && <TableCell>{item.payment_status}</TableCell>}
                       <TableCell>{item.record_date}</TableCell>
-                      <TableCell>
-                        <ActionsDropdown record={item} />
-                      </TableCell>
+                      {!isRestrictedUser() && (
+                        <TableCell>
+                          <ActionsDropdown record={item} />
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -632,7 +643,7 @@ const DataSourcesPage = () => {
                     <TableHead>Address</TableHead>
                     <TableHead>Land Details</TableHead>
                     <TableHead>Building Details</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
+                    {!isRestrictedUser() && <TableHead className="w-[50px]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -648,9 +659,11 @@ const DataSourcesPage = () => {
                       <TableCell>{item.address}</TableCell>
                       <TableCell>{formatLandDetails(item.land_details)}</TableCell>
                       <TableCell>{formatBuildingDetails(item.building_details)}</TableCell>
-                      <TableCell>
-                        <ActionsDropdown record={item} />
-                      </TableCell>
+                      {!isRestrictedUser() && (
+                        <TableCell>
+                          <ActionsDropdown record={item} />
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -673,7 +686,7 @@ const DataSourcesPage = () => {
                     <TableHead>Title Reference</TableHead>
                     <TableHead>Term of Lease</TableHead>
                     <TableHead>Date of Grant</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
+                    {!isRestrictedUser() && <TableHead className="w-[50px]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -689,9 +702,11 @@ const DataSourcesPage = () => {
                       <TableCell>{item.title_reference}</TableCell>
                       <TableCell>{item.term_of_lease}</TableCell>
                       <TableCell>{item.date_of_grant}</TableCell>
-                      <TableCell>
-                        <ActionsDropdown record={item} />
-                      </TableCell>
+                      {!isRestrictedUser() && (
+                        <TableCell>
+                          <ActionsDropdown record={item} />
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { signOut } from '@/integrations/supabase/services';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +16,7 @@ import { RoleBadge } from '@/components/auth/RoleBadge';
 import { RoleGate } from '@/components/auth/RoleGate';
 
 const UserDropdown = () => {
-  const { user, profile, role } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
