@@ -76,7 +76,8 @@ export default {
 					success: 'hsl(var(--gis-success))',
 					warning: 'hsl(var(--gis-warning))',
 					danger: 'hsl(var(--gis-danger))'
-				}
+				},
+				"gis-accent": "hsl(var(--gis-accent))",
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',

@@ -17,8 +17,7 @@ import {
   ZoomIn,
   ZoomOut,
   Home,
-  Download,
-  Filter
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,7 +42,6 @@ interface GISToolbarProps {
   onZoomOut?: () => void;
   onZoomToFit?: () => void;
   onExport?: () => void;
-  onToggleFilter?: () => void;
 }
 
 const GISToolbar: React.FC<GISToolbarProps> = ({
@@ -52,8 +50,7 @@ const GISToolbar: React.FC<GISToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   onZoomToFit,
-  onExport,
-  onToggleFilter
+  onExport
 }) => {
   const [measurementMode, setMeasurementMode] = useState<'distance' | 'area'>('distance');
 
@@ -175,19 +172,6 @@ const GISToolbar: React.FC<GISToolbarProps> = ({
           title="Export Map"
         >
           <Download className="h-4 w-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-8 bg-border" />
-
-        {/* Filter Button */}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-9 w-9 p-0 hover:bg-gis-panel-header border-border"
-          onClick={onToggleFilter}
-          title="Toggle Filter Panel"
-        >
-          <Filter className="h-4 w-4" />
         </Button>
 
         {/* Active Tool Badge */}

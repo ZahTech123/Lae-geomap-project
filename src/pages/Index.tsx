@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import mapboxgl from 'mapbox-gl';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Settings, Map, BarChart3, Database, Brain } from 'lucide-react';
 import UserDropdown from '@/components/layout/UserDropdown';
@@ -60,10 +60,12 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-8">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
+              <Link to="/settings">
+                <Button size="sm" variant="outline" className="h-8">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
               <UserDropdown />
             </div>
           </header>

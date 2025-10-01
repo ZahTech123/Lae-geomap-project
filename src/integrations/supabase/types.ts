@@ -216,62 +216,91 @@ export type Database = {
       }
       profiles: {
         Row: {
-          full_name: string | null
           id: string
+          email: string | null
+          full_name: string | null
           role: Database["public"]["Enums"]["user_role"]
-          updated_at: string | null
-          username: string | null
+          owner_id: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          full_name?: string | null
           id: string
+          email?: string | null
+          full_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string | null
-          username?: string | null
+          owner_id?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          full_name?: string | null
           id?: string
+          email?: string | null
+          full_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string | null
-          username?: string | null
+          owner_id?: string | null
+          created_at?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["owner_id"]
+          },
+        ]
       }
       properties: {
         Row: {
-          address: string
-          building_details: string | null
-          geom: unknown | null
-          land_details: string | null
-          last_valuation_year: number | null
-          owner_user_id: string | null
           property_id: number
+          building_id: string
+          parcel_id: string | null
+          section: string | null
+          lot: string | null
+          val_no: string | null
+          building_name: string | null
+          address: string | null
+          land_details: Json | null
+          building_details: Json | null
+          image_url: string | null
+          geom: unknown | null
         }
         Insert: {
-          address: string
-          building_details?: string | null
-          geom?: unknown | null
-          land_details?: string | null
-          last_valuation_year?: number | null
-          owner_user_id?: string | null
           property_id?: number
+          building_id: string
+          parcel_id?: string | null
+          section?: string | null
+          lot?: string | null
+          val_no?: string | null
+          building_name?: string | null
+          address?: string | null
+          land_details?: Json | null
+          building_details?: Json | null
+          image_url?: string | null
+          geom?: unknown | null
         }
         Update: {
-          address?: string
-          building_details?: string | null
-          geom?: unknown | null
-          land_details?: string | null
-          last_valuation_year?: number | null
-          owner_user_id?: string | null
           property_id?: number
+          building_id?: string
+          parcel_id?: string | null
+          section?: string | null
+          lot?: string | null
+          val_no?: string | null
+          building_name?: string | null
+          address?: string | null
+          land_details?: Json | null
+          building_details?: Json | null
+          image_url?: string | null
+          geom?: unknown | null
         }
         Relationships: []
       }
       tax_records: {
         Row: {
           amount_due: number | null
-          customer_name: string | null
+          val_no: string | null
           payment_status: string | null
           property_id: number
           record_date: string | null
@@ -280,7 +309,7 @@ export type Database = {
         }
         Insert: {
           amount_due?: number | null
-          customer_name?: string | null
+          val_no?: string | null
           payment_status?: string | null
           property_id: number
           record_date?: string | null
@@ -289,7 +318,7 @@ export type Database = {
         }
         Update: {
           amount_due?: number | null
-          customer_name?: string | null
+          val_no?: string | null
           payment_status?: string | null
           property_id?: number
           record_date?: string | null
@@ -326,27 +355,36 @@ export type Database = {
       }
       owners: {
         Row: {
+          id: number
           owner_id: string
-          owner_name: string
-          parcel_id: string
+          owner_name: string | null
+          section: string | null
+          lot: string | null
+          parcel_id: string | null
           contact_info: string | null
           title_reference: string | null
           term_of_lease: string | null
           date_of_grant: string | null
         }
         Insert: {
+          id?: number
           owner_id: string
-          owner_name: string
-          parcel_id: string
+          owner_name?: string | null
+          section?: string | null
+          lot?: string | null
+          parcel_id?: string | null
           contact_info?: string | null
           title_reference?: string | null
           term_of_lease?: string | null
           date_of_grant?: string | null
         }
         Update: {
+          id?: number
           owner_id?: string
-          owner_name?: string
-          parcel_id?: string
+          owner_name?: string | null
+          section?: string | null
+          lot?: string | null
+          parcel_id?: string | null
           contact_info?: string | null
           title_reference?: string | null
           term_of_lease?: string | null
@@ -363,6 +401,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_properties_with_details_geojson: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_my_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
@@ -370,6 +412,7 @@ export type Database = {
     }
     Enums: {
       user_role:
+        | "admin"
         | "finance_editor"
         | "planning_editor"
         | "asset_editor"
@@ -503,6 +546,7 @@ export const Constants = {
   public: {
     Enums: {
       user_role: [
+        "admin",
         "finance_editor",
         "planning_editor",
         "asset_editor",

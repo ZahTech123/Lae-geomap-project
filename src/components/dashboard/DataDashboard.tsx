@@ -11,20 +11,37 @@ import {
   Clock,
   BarChart3,
   PieChart,
-  LineChart
+  Users,
+  DollarSign,
+  FileText,
+  Calendar,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import {
   fetchPropertiesCount,
   fetchTaxRecordsCount,
-  fetchCustomerLotsCount,
-  fetchBuildingFootprintsCount
+  fetchOwnersCount,
+  fetchPlanningDataCount,
+  fetchTaxRevenueSummary,
+  fetchPropertiesWithOwners,
+  fetchPropertiesByLandUse,
+  fetchZoningDistribution,
+  fetchLeaseExpirationStats,
+  fetchTopOwners
 } from '@/integrations/supabase/services';
 
 const DataDashboard: React.FC = () => {
-  const [propertiesCount, setPropertiesCount] = useState<number | null>(null);
-  const [taxRecordsCount, setTaxRecordsCount] = useState<number | null>(null);
-  const [customerLotsCount, setCustomerLotsCount] = useState<number | null>(null);
-  const [buildingFootprintsCount, setBuildingFootprintsCount] = useState<number | null>(null);
+  const [propertiesCount, setPropertiesCount] = useState<number>(0);
+  const [taxRecordsCount, setTaxRecordsCount] = useState<number>(0);
+  const [ownersCount, setOwnersCount] = useState<number>(0);
+  const [planningDataCount, setPlanningDataCount] = useState<number>(0);
+  const [taxSummary, setTaxSummary] = useState<any>(null);
+  const [ownershipData, setOwnershipData] = useState<any>(null);
+  const [landUseData, setLandUseData] = useState<any[]>([]);
+  const [zoningData, setZoningData] = useState<any[]>([]);
+  const [leaseStats, setLeaseStats] = useState<any>(null);
+  const [topOwners, setTopOwners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,100 +50,103 @@ const DataDashboard: React.FC = () => {
       const [
         propCount,
         taxCount,
-        customerCount,
-        buildingCount
+        ownerCount,
+        planningCount,
+        taxSummaryData,
+        ownershipInfo,
+        landUse,
+        zoning,
+        leases,
+        owners
       ] = await Promise.all([
         fetchPropertiesCount(),
         fetchTaxRecordsCount(),
-        fetchCustomerLotsCount(),
-        fetchBuildingFootprintsCount()
+        fetchOwnersCount(),
+        fetchPlanningDataCount(),
+        fetchTaxRevenueSummary(),
+        fetchPropertiesWithOwners(),
+        fetchPropertiesByLandUse(),
+        fetchZoningDistribution(),
+        fetchLeaseExpirationStats(),
+        fetchTopOwners(5)
       ]);
 
-      setPropertiesCount(propCount);
-      setTaxRecordsCount(taxCount);
-      setCustomerLotsCount(customerCount);
-      setBuildingFootprintsCount(buildingCount);
+      setPropertiesCount(propCount || 0);
+      setTaxRecordsCount(taxCount || 0);
+      setOwnersCount(ownerCount || 0);
+      setPlanningDataCount(planningCount || 0);
+      setTaxSummary(taxSummaryData);
+      setOwnershipData(ownershipInfo);
+      setLandUseData(landUse || []);
+      setZoningData(zoning || []);
+      setLeaseStats(leases);
+      setTopOwners(owners || []);
       setLoading(false);
     };
 
     fetchData();
   }, []);
 
-  const totalLayers = (propertiesCount || 0) + (taxRecordsCount || 0) + (customerLotsCount || 0) + (buildingFootprintsCount || 0);
-  const totalFeatures = (propertiesCount || 0) + (buildingFootprintsCount || 0); // Assuming properties and building footprints are primary geographic features
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'PGK',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  // Sample data for charts (will be updated with real data where possible)
-  const layerData = [
-    { name: 'Properties', features: propertiesCount || 0, status: 'active' },
-    { name: 'Tax Records', features: taxRecordsCount || 0, status: 'active' },
-    { name: 'Customer Lots', features: customerLotsCount || 0, status: 'active' },
-    { name: 'Building Footprints', features: buildingFootprintsCount || 0, status: 'active' },
-    // POI, Boundaries, Water are placeholders for now, or could be derived from other data sources
-    { name: 'POI', features: 5634, status: 'inactive' },
-    { name: 'Boundaries', features: 3421, status: 'active' },
-    { name: 'Water', features: 2876, status: 'active' },
-  ];
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US').format(num);
+  };
 
-  const usageData = [
-    { day: 'Mon', views: 240, exports: 45 },
-    { day: 'Tue', views: 300, exports: 67 },
-    { day: 'Wed', views: 280, exports: 52 },
-    { day: 'Thu', views: 390, exports: 78 },
-    { day: 'Fri', views: 450, exports: 89 },
-    { day: 'Sat', views: 320, exports: 65 },
-    { day: 'Sun', views: 270, exports: 48 },
-  ];
-
-  const performanceData = [
-    { time: '00:00', load: 45, response: 120 },
-    { time: '04:00', load: 35, response: 98 },
-    { time: '08:00', load: 78, response: 180 },
-    { time: '12:00', load: 92, response: 220 },
-    { time: '16:00', load: 85, response: 195 },
-    { time: '20:00', load: 70, response: 165 },
-  ];
-
-  const typeDistribution = [
-    { name: 'Vector', value: 45, color: '#0ea5e9' },
-    { name: 'Raster', value: 25, color: '#8b5cf6' },
-    { name: 'Point', value: 20, color: '#10b981' },
-    { name: 'Other', value: 10, color: '#f59e0b' },
-  ];
-
-  const stats = [
+  const mainStats = [
     {
-      title: 'Total Layers',
-      value: totalLayers.toLocaleString(),
-      change: '+3', // Placeholder
-      changeType: 'positive' as const,
-      icon: Layers,
-      description: 'Active data layers'
-    },
-    {
-      title: 'Features',
-      value: totalFeatures.toLocaleString(),
-      change: '+12%', // Placeholder
+      title: 'Total Properties',
+      value: formatNumber(propertiesCount),
+      change: ownershipData ? `${((ownershipData.propertiesWithOwners / propertiesCount) * 100).toFixed(0)}% with owners` : '',
       changeType: 'positive' as const,
       icon: MapPin,
-      description: 'Geographic features'
+      description: 'Registered properties'
     },
     {
-      title: 'Daily Views',
-      value: '1,247', // Placeholder
-      change: '+8%', // Placeholder
+      title: 'Tax Revenue',
+      value: taxSummary ? formatCurrency(taxSummary.totalRevenue) : 'K0',
+      change: taxSummary ? `${taxSummary.collectionRate.toFixed(1)}% collected` : '',
+      changeType: taxSummary && taxSummary.collectionRate >= 70 ? 'positive' as const : 'neutral' as const,
+      icon: DollarSign,
+      description: 'Total tax revenue'
+    },
+    {
+      title: 'Property Owners',
+      value: formatNumber(ownersCount),
+      change: `${formatNumber(propertiesCount)} properties`,
       changeType: 'positive' as const,
-      icon: Activity,
-      description: 'Map views today'
+      icon: Users,
+      description: 'Registered owners'
     },
     {
-      title: 'Data Size',
-      value: '2.4 GB', // Placeholder
-      change: '+150MB', // Placeholder
+      title: 'Planning Records',
+      value: formatNumber(planningDataCount),
+      change: `${((planningDataCount / propertiesCount) * 100).toFixed(0)}% coverage`,
       changeType: 'neutral' as const,
-      icon: Database,
-      description: 'Total storage used'
+      icon: FileText,
+      description: 'Zoning & permits'
     }
   ];
+
+  // Prepare data for visualizations
+  const layerData = [
+    { name: 'Properties', features: propertiesCount, status: 'active' },
+    { name: 'Owners', features: ownersCount, status: 'active' },
+    { name: 'Tax Records', features: taxRecordsCount, status: 'active' },
+    { name: 'Planning Data', features: planningDataCount, status: 'active' },
+  ];
+
+  const taxDistribution = taxSummary ? [
+    { name: 'Collected', value: taxSummary.paidAmount, color: '#10b981', percentage: (taxSummary.paidAmount / taxSummary.totalRevenue) * 100 },
+    { name: 'Outstanding', value: taxSummary.unpaidAmount, color: '#ef4444', percentage: (taxSummary.unpaidAmount / taxSummary.totalRevenue) * 100 },
+  ] : [];
 
   return (
     <div className="p-6 space-y-6 bg-background min-h-screen">
@@ -147,9 +167,9 @@ const DataDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {mainStats.map((stat, index) => (
           <Card key={index} className="bg-card border-border shadow-panel">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -162,16 +182,18 @@ const DataDashboard: React.FC = () => {
                   <div className="w-12 h-12 bg-gis-accent/20 rounded-lg flex items-center justify-center">
                     <stat.icon className="h-6 w-6 text-gis-accent" />
                   </div>
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-xs ${
-                      stat.changeType === 'positive' 
-                        ? 'text-gis-success bg-gis-success/20 border-gis-success/30' 
-                        : 'text-muted-foreground bg-muted/20'
-                    }`}
-                  >
-                    {stat.change}
-                  </Badge>
+                  {stat.change && (
+                    <Badge 
+                      variant="secondary" 
+                      className={`text-xs ${
+                        stat.changeType === 'positive' 
+                          ? 'text-gis-success bg-gis-success/20 border-gis-success/30' 
+                          : 'text-muted-foreground bg-muted/20'
+                      }`}
+                    >
+                      {stat.change}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -179,154 +201,262 @@ const DataDashboard: React.FC = () => {
         ))}
       </div>
 
+      {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Layer Usage Chart */}
+        {/* Property Ownership Analysis */}
+        <Card className="bg-card border-border shadow-panel">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-gis-accent" />
+              Property Ownership
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {ownershipData ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Properties with Owners</p>
+                    <p className="text-2xl font-bold text-gis-success">{formatNumber(ownershipData.propertiesWithOwners)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-gis-success">
+                      {((ownershipData.propertiesWithOwners / ownershipData.totalProperties) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Properties without Owners</p>
+                    <p className="text-2xl font-bold text-amber-500">{formatNumber(ownershipData.propertiesWithoutOwners)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-amber-500">
+                      {((ownershipData.propertiesWithoutOwners / ownershipData.totalProperties) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <Progress 
+                  value={(ownershipData.propertiesWithOwners / ownershipData.totalProperties) * 100} 
+                  className="h-3"
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Ownership coverage across {formatNumber(ownershipData.totalProperties)} properties
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading ownership data...</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tax Revenue Analysis */}
+        <Card className="bg-card border-border shadow-panel">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-gis-accent" />
+              Tax Revenue Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {taxSummary ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Collected Revenue</p>
+                    <p className="text-2xl font-bold text-gis-success">{formatCurrency(taxSummary.paidAmount)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-gis-success">
+                      {taxSummary.collectionRate.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Outstanding Tax</p>
+                    <p className="text-2xl font-bold text-red-500">{formatCurrency(taxSummary.unpaidAmount)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-red-500">
+                      {((taxSummary.unpaidAmount / taxSummary.totalRevenue) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <Progress 
+                  value={taxSummary.collectionRate} 
+                  className="h-3"
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Total Revenue: {formatCurrency(taxSummary.totalRevenue)} from {formatNumber(taxSummary.totalRecords)} records
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading tax revenue data...</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Land Use Distribution */}
+        <Card className="bg-card border-border shadow-panel">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-gis-accent" />
+              Land Use Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {landUseData.slice(0, 6).map((item, index) => {
+                const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1'];
+                const color = colors[index % colors.length];
+                const total = landUseData.reduce((sum, i) => sum + i.count, 0);
+                const percentage = ((item.count / total) * 100).toFixed(1);
+                
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                        <span className="text-sm font-medium">{item.land_use}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{formatNumber(item.count)} ({percentage}%)</span>
+                    </div>
+                    <Progress value={parseFloat(percentage)} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lease Management */}
+        <Card className="bg-card border-border shadow-panel">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-gis-accent" />
+              Lease Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {leaseStats ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-gis-panel rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Total Leases</p>
+                    <p className="text-3xl font-bold text-foreground">{formatNumber(leaseStats.totalLeases)}</p>
+                  </div>
+                  <div className="text-center p-4 bg-gis-panel rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Active</p>
+                    <p className="text-3xl font-bold text-gis-success">{formatNumber(leaseStats.activeLeases)}</p>
+                  </div>
+                  <div className="text-center p-4 bg-gis-panel rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Expiring Soon</p>
+                    <p className="text-3xl font-bold text-amber-500">{formatNumber(leaseStats.expiringSoon)}</p>
+                  </div>
+                </div>
+                {leaseStats.expiringSoon > 0 && (
+                  <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Attention Required</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatNumber(leaseStats.expiringSoon)} lease(s) expiring within 5 years
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading lease data...</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Layer Usage */}
         <Card className="bg-card border-border shadow-panel">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-gis-accent" />
-              Layer Usage
+              Data Layer Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {layerData.map((layer, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{layer.name}</span>
-                    <span className="text-sm text-muted-foreground">{layer.features.toLocaleString()}</span>
-                  </div>
-                  <Progress value={(layer.features / 12453) * 100} className="h-2" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Data Type Distribution */}
-        <Card className="bg-card border-border shadow-panel">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-gis-accent" />
-              Data Type Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {typeDistribution.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm font-medium">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{item.value}%</span>
-                    <Progress value={item.value} className="w-20 h-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Usage Trends */}
-        <Card className="bg-card border-border shadow-panel">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <LineChart className="h-5 w-5 text-gis-accent" />
-              Weekly Usage
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {usageData.map((day, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{day.day}</span>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span>Views: {day.views}</span>
-                      <span>Exports: {day.exports}</span>
+                <div key={index} className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-gis-accent" />
+                    <div>
+                      <p className="font-medium text-foreground">{layer.name}</p>
+                      <p className="text-sm text-muted-foreground">{formatNumber(layer.features)} records</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Progress value={(day.views / 450) * 100} className="flex-1 h-2" />
-                    <Progress value={(day.exports / 89) * 100} className="flex-1 h-2" />
-                  </div>
+                  <Badge 
+                    variant="secondary"
+                    className="text-gis-success bg-gis-success/20 border-gis-success/30"
+                  >
+                    {layer.status}
+                  </Badge>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* System Performance */}
+        {/* Top Property Owners */}
         <Card className="bg-card border-border shadow-panel">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-gis-accent" />
-              System Performance
+              <TrendingUp className="h-5 w-5 text-gis-accent" />
+              Top Property Owners
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {performanceData.map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{item.time}</span>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span>Load: {item.load}%</span>
-                      <span>Response: {item.response}ms</span>
+            <div className="space-y-3">
+              {topOwners.map((owner, index) => {
+                const maxCount = topOwners[0]?.property_count || 1;
+                const percentage = (owner.property_count / maxCount) * 100;
+                
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium truncate max-w-[70%]">{owner.owner_name}</span>
+                      <span className="text-sm text-muted-foreground">{formatNumber(owner.property_count)} properties</span>
                     </div>
+                    <Progress value={percentage} className="h-2" />
                   </div>
-                  <div className="flex gap-2">
-                    <Progress value={item.load} className="flex-1 h-2" />
-                    <Progress value={(item.response / 220) * 100} className="flex-1 h-2" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Layer Status Table */}
-      <Card className="bg-card border-border shadow-panel">
-        <CardHeader>
-          <CardTitle className="text-foreground flex items-center gap-2">
-            <Database className="h-5 w-5 text-gis-accent" />
-            Layer Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {layerData.map((layer, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gis-panel rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className="w-2 h-2 rounded-full bg-gis-accent" />
-                  <div>
-                    <p className="font-medium text-foreground">{layer.name}</p>
-                    <p className="text-sm text-muted-foreground">{layer.features.toLocaleString()} features</p>
-                  </div>
+      {/* Zoning Distribution (if data exists) */}
+      {zoningData.length > 0 && (
+        <Card className="bg-card border-border shadow-panel">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Layers className="h-5 w-5 text-gis-accent" />
+              Zoning Code Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {zoningData.slice(0, 12).map((zone, index) => (
+                <div key={index} className="text-center p-4 bg-gis-panel rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">{zone.zoning_code}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatNumber(zone.count)}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Progress value={75} className="w-24" />
-                  <Badge 
-                    variant="secondary"
-                    className={layer.status === 'active' 
-                      ? 'text-gis-success bg-gis-success/20 border-gis-success/30'
-                      : 'text-muted-foreground bg-muted/20'
-                    }
-                  >
-                    {layer.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
