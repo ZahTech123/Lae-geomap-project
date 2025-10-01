@@ -6,7 +6,6 @@ import { Outlet, NavLink, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Settings, Map, BarChart3, Database, Brain } from 'lucide-react';
 import UserDropdown from '@/components/layout/UserDropdown';
-import morobeFlag from "@/assets/morobe-flag.jpg";
 
 const mainNavItems = [
   { title: "Map View", url: "/", icon: Map },
@@ -34,7 +33,7 @@ const Index = () => {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src={morobeFlag} 
+                    src="https://i.ibb.co/QvgzsHJ3/morobe-flag.jpg" 
                     alt="Morobe Provincial Flag" 
                     className="w-full h-full object-cover"
                   />
