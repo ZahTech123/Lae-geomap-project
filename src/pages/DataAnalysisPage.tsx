@@ -4,8 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Lightbulb } from "lucide-react";
-import { fetchAllTaxRecords, fetchAllProperties, fetchAllCustomerLots, fetchAllOwners, TaxRecord, Property, CustomerLot, Owner } from "@/integrations/supabase/services";
+import { Brain, Lightbulb, Loader } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import customerData from '@/assets/customer_w2.json';
+import ownerData from '@/assets/owners_w2.json';
+import vrollData from '@/assets/vroll.json';
+import buildingData from '@/assets/building_footprintsw2.json';
 
 const API_KEY_STORAGE_KEY = "gemini_api_key";
 
@@ -16,11 +20,7 @@ const DataAnalysisPage: React.FC = () => {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [taxRecords, setTaxRecords] = useState<TaxRecord[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [customerLots, setCustomerLots] = useState<CustomerLot[]>([]);
-  const [owners, setOwners] = useState<Owner[]>([]); // New state for owners data
-  const [dataLoading, setDataLoading] = useState<boolean>(true);
+  const [dataLoading, setDataLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const storedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
@@ -29,26 +29,6 @@ const DataAnalysisPage: React.FC = () => {
     } else {
       setApiKey("AIzaSyA_9qiO0Qv5PfEPWxzj5BuTNfb3MRWvTic"); // Default API key if none is stored
     }
-    generateInitialSuggestedQuestions();
-
-    const fetchData = async () => {
-      setDataLoading(true);
-      try {
-        const fetchedTaxRecords = await fetchAllTaxRecords();
-        if (fetchedTaxRecords) setTaxRecords(fetchedTaxRecords);
-        const fetchedProperties = await fetchAllProperties();
-        if (fetchedProperties) setProperties(fetchedProperties);
-        const fetchedCustomerLots = await fetchAllCustomerLots();
-        if (fetchedCustomerLots) setCustomerLots(fetchedCustomerLots);
-        const fetchedOwners = await fetchAllOwners(); // Fetch owners data
-        if (fetchedOwners) setOwners(fetchedOwners); // Set owners data
-      } catch (e: any) {
-        setError(`Failed to fetch data: ${e.message}`);
-      } finally {
-        setDataLoading(false);
-      }
-    };
-    fetchData();
   }, []);
 
   const getGenerativeModel = () => {
@@ -65,77 +45,79 @@ const DataAnalysisPage: React.FC = () => {
     }
   };
 
-  const generateInitialSuggestedQuestions = () => {
-    const allQuestions = [
-      "What is the total outstanding tax amount across all tax records?",
-      "Identify properties with 'Commercial' land use that also have associated customer lots.",
-      "What is the average 'Last Valuation Year' for properties?",
-      "Show me the top 5 customers by the number of lots they own.",
-      "Are there any properties with discrepancies between their 'Land Use' in property data and 'Ward' in customer lots data?",
-      "List all properties with 'Building Details' specified as 'Residential'.",
-      "Which property address has the most recent 'Last Valuation Year'?",
-      "Summarize the tax payment statuses.",
-      "Find all customer lots in 'Section 0006'.",
-      "What is the distribution of 'Land Details' across properties?",
-      "What is the total number of properties in the dataset?",
-      "How many tax records have an 'Unpaid' status?",
-      "What is the average 'Amount Due' for tax records?",
-      "List all unique 'Land Details' categories present in the properties data.",
-      "Which 'Ward' has the most customer lots?",
-      "Identify properties with missing 'Building Details'.",
-      "What is the most common 'Building Details' type?",
-      "Find all tax records for 'DON ANJO'.",
-      "What is the total number of customer lots?",
-      "Are there any properties with a 'Last Valuation Year' before 2000?"
-    ];
+  const generateSuggestedQuestions = async () => {
+    setLoading(true);
+    setError('');
 
-    // Shuffle the questions to provide a "random" order
-    const shuffledQuestions = [...allQuestions].sort(() => Math.random() - 0.5);
-    // Take a subset, e.g., the first 10, or all if less than 10
-    setSuggestedQuestions(shuffledQuestions.slice(0, 10));
+    const model = getGenerativeModel();
+    if (!model) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const dataContext = serializeDataForAI();
+      const prompt = `Based on the following data summary, generate 5 insightful questions that a user might ask. Return the questions as a numbered list.
+
+      Data Context:
+      ${dataContext}
+      `;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      
+      // Parse the numbered list of questions from the AI's response
+      const questions = text.split('\n').filter(q => q.trim().length > 0 && /^\d+\./.test(q.trim()));
+      setSuggestedQuestions(questions.map(q => q.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '')));
+
+    } catch (e: any) {
+      setError(`Failed to generate suggested questions: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const serializeDataForAI = () => {
-    let dataContext = "Available GIS data includes:\n\n";
+    let dataContext = "The following data is available for analysis:\n\n";
 
-    if (properties.length > 0) {
-      dataContext += "Properties:\n";
-      properties.slice(0, 5).forEach(p => { // Limit to first 5 for brevity
-        dataContext += `- ID: ${p.property_id}, Address: ${p.address}, Land Details: ${p.land_details}, Building Details: ${p.building_details}, Last Valuation Year: ${p.last_valuation_year}, Owner User ID: ${p.owner_user_id}\n`;
+    if (customerData.length > 0) {
+      dataContext += "Property Occupant Information:\n";
+      customerData.slice(0, 5).forEach(c => {
+        dataContext += `- Customer ID: ${c.customer_id}, Name: ${c.customer_name}, Section: ${c.section}, Lot: ${c['lot(s)']}\n`;
       });
-      if (properties.length > 5) dataContext += `... (and ${properties.length - 5} more properties)\n`;
+      if (customerData.length > 5) dataContext += `... (and ${customerData.length - 5} more customer records)\n`;
       dataContext += "\n";
     }
 
-    if (taxRecords.length > 0) {
-      dataContext += "Tax Records:\n";
-      taxRecords.slice(0, 5).forEach(t => { // Limit to first 5 for brevity
-        dataContext += `- ID: ${t.tax_record_id}, Property ID: ${t.property_id}, Customer: ${t.customer_name}, Amount Due: ${t.amount_due}, Status: ${t.payment_status}\n`;
+    if (ownerData.length > 0) {
+      dataContext += "Land Ownership Records:\n";
+      ownerData.slice(0, 5).forEach(o => {
+        dataContext += `- Owner ID: ${o.owner_id}, Name: ${o['name ']}, Parcel ID: ${o.parcel_id}, Lot: ${o['lot(s)']}\n`;
       });
-      if (taxRecords.length > 5) dataContext += `... (and ${taxRecords.length - 5} more tax records)\n`;
+      if (ownerData.length > 5) dataContext += `... (and ${ownerData.length - 5} more owner records)\n`;
       dataContext += "\n";
     }
 
-    if (customerLots.length > 0) {
-      dataContext += "Customer Lots:\n";
-      customerLots.slice(0, 5).forEach(c => { // Limit to first 5 for brevity
-        dataContext += `- ID: ${c.id}, Customer: ${c.customer_name}, Lot: ${c.lot_number}, Section: ${c.section}, Ward: ${c.ward}, Address: ${c.address}\n`;
+    if (vrollData.length > 0) {
+      dataContext += "Tax Valuation Records:\n";
+      vrollData.slice(0, 5).forEach(v => {
+        dataContext += `- Valuation No: ${v['val no.']}, Parcel ID: ${v.parcel_id}, Assessed UV (K): ${v['assessed UV (K)']}, Lot: ${v['lot(s)']}\n`;
       });
-      if (customerLots.length > 5) dataContext += `... (and ${customerLots.length - 5} more customer lots)\n`;
+      if (vrollData.length > 5) dataContext += `... (and ${vrollData.length - 5} more valuation records)\n`;
       dataContext += "\n";
     }
 
-    if (owners.length > 0) {
-      dataContext += "Owners:\n";
-      owners.slice(0, 5).forEach(o => { // Limit to first 5 for brevity
-        dataContext += `- ID: ${o.owner_id}, Name: ${o.owner_name}, Parcel ID: ${o.parcel_id}, Contact: ${o.contact_info}, Title Ref: ${o.title_reference}, Lease Term: ${o.term_of_lease}, Grant Date: ${o.date_of_grant}\n`;
+    if (buildingData.features.length > 0) {
+      dataContext += "Building Layout Information:\n";
+      buildingData.features.slice(0, 5).forEach(b => {
+        dataContext += `- Building ID: ${b.properties.building_i}, Parcel ID: ${b.properties.parcel_id}, Area: ${b.properties.area_sq_m}\n`;
       });
-      if (owners.length > 5) dataContext += `... (and ${owners.length - 5} more owners)\n`;
+      if (buildingData.features.length > 5) dataContext += `... (and ${buildingData.features.length - 5} more building records)\n`;
       dataContext += "\n";
     }
 
-    if (dataContext === "Available GIS data includes:\n\n") {
-      dataContext += "No data currently available. Please ensure data sources are configured and accessible.";
+    if (dataContext === "The following data is available for analysis:\n\n") {
+      dataContext += "No data currently available.";
     }
 
     return dataContext;
@@ -159,7 +141,7 @@ const DataAnalysisPage: React.FC = () => {
     try {
       const dataContext = serializeDataForAI();
 
-      const fullPrompt = `Given the following GIS property data, tax records, and customer lot information, answer the user's question and provide relevant insights. Focus on the provided data.
+      const fullPrompt = `Given the following GIS property data, tax records, and customer lot information, answer the user's question. Summarize your analysis into a single, precise paragraph.
       Data Context:
       ${dataContext}
 
@@ -206,7 +188,14 @@ const DataAnalysisPage: React.FC = () => {
               disabled={dataLoading}
             />
             <Button onClick={() => handleAskQuestion()} disabled={loading || dataLoading}>
-              {loading ? "Analyzing..." : "Ask AI"}
+              {loading ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                "Ask AI"
+              )}
             </Button>
             <Button variant="outline" onClick={() => { setQuestion(''); setResponse(''); setError(''); }} disabled={loading || dataLoading}>
               Clear
@@ -214,9 +203,16 @@ const DataAnalysisPage: React.FC = () => {
           </div>
           {dataLoading && <p className="text-blue-500 text-sm">Loading data for analysis...</p>}
           {error && <p className="text-red-500 text-sm">{error}</p>}
+          {loading && !response && (
+            <div className="flex items-center justify-center p-8">
+              <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
           {response && (
             <ScrollArea className="h-[500px] w-full rounded-md border p-4 bg-secondary/20">
-              <p className="whitespace-pre-wrap">{response}</p>
+              <div className="prose dark:prose-invert">
+                <ReactMarkdown>{response}</ReactMarkdown>
+              </div>
             </ScrollArea>
           )}
         </CardContent>
@@ -230,8 +226,8 @@ const DataAnalysisPage: React.FC = () => {
             </div>
             <Button
               variant="outline"
-              onClick={generateInitialSuggestedQuestions}
-              disabled={dataLoading}
+              onClick={generateSuggestedQuestions}
+              disabled={dataLoading || loading}
             >
               Generate Analysis Questions
             </Button>
